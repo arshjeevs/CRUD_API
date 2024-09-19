@@ -7,78 +7,124 @@ const { UserSchema } = require("../ZodSchema.js");
 
 const router = express.Router();
 
-router.get("/read", authMiddleware, (req, res) => {
-  const body = req.body;
-  const ZodVerify = UserSchema.safeParse(body);
-  if (!ZodVerify.success) {
+router.get("/read", async (req, res) => {
+  try {
+    const { Username } = req.body;
+
+    if ( !Username ) {
+      return res.status(400).json({
+        message: "Username is required",
+      });
+    }
+
+
+
+    // const ZodVerify = UserSchema.safeParse({ Username, Password, FirstName, LastName });
+
+    // if (!ZodVerify.success) {
+    //   return res.json({
+    //     message: "Invalid data",
+    //   });
+    // }
+
+    const UserToRead = await User.findOne({ Username }); 
+
+    if (!UserToRead) {
+      return res.status(404).json({
+        message: "User not found",
+       });
+     }
+
     return res.json({
-      message: "Invalid data",
+      message: "User has read access",
+      user: UserToRead,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "An error occurred while reading the user.",
     });
   }
-  const Username = body.Username;
-  const Password = body.Password;
-  const FirstName = body.FirstName;
-  const LastName = body.LastName;
-  return res.json({
-    message: "User has read access",
-    Username,
-    Password,
-    FirstName,
-    LastName,
-  });
 });
 
 router.post("/create", async (req, res) => {
-  const body = req.body;
-  const ZodVerify = UserSchema.safeParse(body);
-  if (!ZodVerify.success) {
+  try {
+    const { Username, Password, FirstName, LastName } = req.body;
+
+    if (!Username || !Password || !FirstName || !LastName) {
+      return res.status(400).json({
+        message: "All fields are required",
+      });
+    }
+
+    const ZodVerify = UserSchema.safeParse({ Username, Password, FirstName, LastName });
+
+    if (!ZodVerify.success) {
+      return res.json({
+        message: "Invalid data",
+      });
+    }
+
+    const CreateToken = JWT.sign({ Username }, JWT_SECRET);
+    const NewAccount = await User.create({ Username, Password, FirstName, LastName });
+
     return res.json({
-      message: "Invalid data",
+      message: "User created successfully",
+      user: NewAccount,
+      token: CreateToken,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "An error occurred while creating the user.",
     });
   }
-
-  const Username = body.Username;
-  const Password = body.Password;
-  const FirstName = body.FirstName;
-  const LastName = body.LastName;
-  const CreateToken = JWT.sign({ Username }, JWT_SECRET);
-
-  const NewAccount = await User.create({
-    Username,
-    Password,
-    FirstName,
-    LastName,
-  });
-
-  return res.json({
-    message: "User created successfully",
-    CreateToken: CreateToken,
-  });
 });
 
 router.delete("/delete", async (req, res) => {
-  const body = req.body;
-  const Username = body.Username;
-  const UserToDelete = await User.findOneAndDelete({ Username });
-  if (!UserToDelete) {
-    return res.status(404).json({ message: "User not found" });
+  try {
+    const { Username } = req.body;
+    const UserToDelete = await User.findOneAndDelete({ Username });
+    
+    if (!UserToDelete) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    return res.json({
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "An error occurred while deleting the user.",
+    });
   }
-  return res.json({
-    message: "User deleted successfully",
-  });
 });
 
-router.put("/update", authMiddleware, async (req, res) => {
-  const body = req.body;
-  const Username = req.Username;
-  const UserToUpdate = await User.findOne(Username, body, { new : true});
+router.put("/update", async (req, res) => {
+  const { Username } = req.body;
+  const dataToUpdate = req.body;
+  try {
+    const UserToUpdate = await User.findOne({ Username });
 
-  if (!UserToUpdate) {
-  }
-  return res.json({
-    message: "User updated successfully",
-  });
-  return;
+    if (!UserToUpdate) {
+      return res.status(404).json({
+        message: "User not found",
+       });
+     }
+     
+    const updatedUser = await User.findOneAndUpdate({ Username },dataToUpdate,{"new" : true});
+    return res.status(200).json({
+      message: "User updated successfully",
+      user: updatedUser,
+    });
+  } catch(error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "An error occurred while updating the user.",
+  })};
 });
 
 module.exports = router;
