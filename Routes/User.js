@@ -7,7 +7,7 @@ const { UserSchema } = require("../ZodSchema.js");
 
 const router = express.Router();
 
-router.get("/read", async (req, res) => {
+router.get("/read", authMiddleware,async (req, res) => {
   try {
     const { Username } = req.body;
 
@@ -16,8 +16,6 @@ router.get("/read", async (req, res) => {
         message: "Username is required",
       });
     }
-
-
 
     // const ZodVerify = UserSchema.safeParse({ Username, Password, FirstName, LastName });
 
@@ -39,6 +37,7 @@ router.get("/read", async (req, res) => {
       message: "User has read access",
       user: UserToRead,
     });
+    
   } catch (error) {
     console.error(error);
     return res.status(500).json({
@@ -81,7 +80,7 @@ router.post("/create", async (req, res) => {
   }
 });
 
-router.delete("/delete", async (req, res) => {
+router.delete("/delete", authMiddleware, async (req, res) => {
   try {
     const { Username } = req.body;
     const UserToDelete = await User.findOneAndDelete({ Username });
@@ -103,7 +102,7 @@ router.delete("/delete", async (req, res) => {
   }
 });
 
-router.put("/update", async (req, res) => {
+router.put("/update", authMiddleware, async (req, res) => {
   const { Username } = req.body;
   const dataToUpdate = req.body;
   try {

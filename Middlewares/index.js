@@ -11,6 +11,7 @@ const authMiddleware = (req, res, next) => {
     }
     const tokenSecret = token?.split(" ")[1];
     const response = JWT.verify(tokenSecret, JWT_SECRET);
+    console.log("response", response);
     next();
   } catch (err) {
     res.status(403).json({
