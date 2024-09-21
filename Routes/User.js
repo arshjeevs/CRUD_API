@@ -9,21 +9,13 @@ const router = express.Router();
 
 router.get("/read", authMiddleware,async (req, res) => {
   try {
-    const { Username } = req.body;
+    const  Username  = req.Username;
 
     if ( !Username ) {
       return res.status(400).json({
         message: "Username is required",
       });
     }
-
-    // const ZodVerify = UserSchema.safeParse({ Username, Password, FirstName, LastName });
-
-    // if (!ZodVerify.success) {
-    //   return res.json({
-    //     message: "Invalid data",
-    //   });
-    // }
 
     const UserToRead = await User.findOne({ Username }); 
 
@@ -82,7 +74,7 @@ router.post("/create", async (req, res) => {
 
 router.delete("/delete", authMiddleware, async (req, res) => {
   try {
-    const { Username } = req.body;
+    const  Username  = req.Username;
     const UserToDelete = await User.findOneAndDelete({ Username });
     
     if (!UserToDelete) {
@@ -103,7 +95,7 @@ router.delete("/delete", authMiddleware, async (req, res) => {
 });
 
 router.put("/update", authMiddleware, async (req, res) => {
-  const { Username } = req.body;
+  const  Username  = req.Username;
   const dataToUpdate = req.body;
   try {
     const UserToUpdate = await User.findOne({ Username });
